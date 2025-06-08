@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#44A08D;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#gradient)" stroke="#2E8B57" stroke-width="4"/>
+  
+  <!-- Trash bin body -->
+  <rect x="70" y="80" width="60" height="80" rx="5" ry="5" fill="#2C3E50"/>
+  
+  <!-- Trash bin lid -->
+  <ellipse cx="100" cy="80" rx="35" ry="8" fill="#34495E"/>
+  <rect x="65" y="72" width="70" height="16" rx="8" ry="8" fill="#34495E"/>
+  
+  <!-- Trash bin handle -->
+  <ellipse cx="100" cy="75" rx="12" ry="4" fill="none" stroke="#BDC3C7" stroke-width="3"/>
+  
+  <!-- Japan-style elements -->
+  <!-- Cherry blossom petals -->
+  <g transform="translate(140, 40)" fill="#FF69B4" opacity="0.7">
+    <path d="M0,0 C-3,-3 -3,-7 0,-10 C3,-7 3,-3 0,0 Z"/>
+    <path d="M0,0 C3,-3 7,-3 10,0 C7,3 3,3 0,0 Z" transform="rotate(72)"/>
+    <path d="M0,0 C3,3 3,7 0,10 C-3,7 -3,3 0,0 Z" transform="rotate(144)"/>
+    <path d="M0,0 C-3,3 -7,3 -10,0 C-7,-3 -3,-3 0,0 Z" transform="rotate(216)"/>
+    <path d="M0,0 C-3,-3 -3,-7 0,-10 Z" transform="rotate(288)"/>
+  </g>
+  
+  <!-- Location pin -->
+  <g transform="translate(60, 40)">
+    <path d="M0,0 C-8,0 -15,7 -15,15 C-15,25 0,40 0,40 S15,25 15,15 C15,7 8,0 0,0 Z" fill="#E74C3C"/>
+    <circle cx="0" cy="15" r="8" fill="#FFF"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="100" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2C3E50">
+    TrashSpot Japan
+  </text>
+</svg>

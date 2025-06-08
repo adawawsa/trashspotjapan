@@ -1,6 +1,6 @@
 const logger = require('../utils/logger');
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   // Log error
   logger.error(`Error: ${err.message}`, {
     error: err,
@@ -8,8 +8,8 @@ const errorHandler = (err, req, res, next) => {
       method: req.method,
       url: req.url,
       headers: req.headers,
-      body: req.body,
-    },
+      body: req.body
+    }
   });
 
   // Set default error status and message
@@ -33,7 +33,7 @@ const errorHandler = (err, req, res, next) => {
     status: 'error',
     message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   });
 };
 

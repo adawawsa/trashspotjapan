@@ -11,16 +11,16 @@ const pgPool = new Pool({
   password: process.env.DB_PASSWORD,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 2000
 });
 
 // Redis configuration
 const redisClient = redis.createClient({
   socket: {
     host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+    port: parseInt(process.env.REDIS_PORT, 10) || 6379
   },
-  password: process.env.REDIS_PASSWORD || undefined,
+  password: process.env.REDIS_PASSWORD || undefined
 });
 
 // Connect to Redis
@@ -43,5 +43,5 @@ redisClient.on('connect', () => {
 
 module.exports = {
   pgPool,
-  redisClient,
+  redisClient
 };

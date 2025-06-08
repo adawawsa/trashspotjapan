@@ -3,9 +3,11 @@ const logger = require('../utils/logger');
 
 class TrashBinService {
   // Search nearby trash bins
-  async searchNearbyTrashBins({ lat, lng, radius, trashTypes, facilityTypes, limit }) {
+  async searchNearbyTrashBins({
+    lat, lng, radius, trashTypes, facilityTypes, limit
+  }) {
     const cacheKey = `search:${lat}:${lng}:${radius}:${trashTypes?.join(',')}:${facilityTypes?.join(',')}:${limit}`;
-    
+
     try {
       // Check cache first
       const cached = await redisClient.get(cacheKey);
@@ -60,7 +62,7 @@ class TrashBinService {
       const result = await pgPool.query(query, params);
 
       // Format results
-      const trashBins = result.rows.map(row => ({
+      const trashBins = result.rows.map((row) => ({
         id: row.id,
         name: row.name,
         location: {
@@ -177,16 +179,18 @@ class TrashBinService {
   }
 
   // Submit user feedback
-  async submitUserFeedback({ trashBinId, feedbackType, feedbackContent, userLocation, imageUrl }) {
+  async submitUserFeedback({
+    trashBinId, feedbackType, feedbackContent, userLocation, imageUrl
+  }) {
     try {
-      let query = `
+      const query = `
         INSERT INTO user_feedback (
           trash_bin_id, feedback_type, feedback_content, user_location, image_url
         ) VALUES ($1, $2, $3, $4, $5)
         RETURNING id
       `;
 
-      const userLocationPoint = userLocation 
+      const userLocationPoint = userLocation
         ? `POINT(${userLocation.lng} ${userLocation.lat})`
         : null;
 
@@ -256,11 +260,11 @@ class TrashBinService {
         paramIndex++;
       }
 
-      query += ` ORDER BY tb.quality_score DESC`;
+      query += ' ORDER BY tb.quality_score DESC';
 
       const result = await pgPool.query(query, params);
 
-      return result.rows.map(row => ({
+      return result.rows.map((row) => ({
         id: row.id,
         name: row.name,
         location: {

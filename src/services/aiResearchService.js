@@ -8,7 +8,7 @@ class AIResearchService {
   constructor() {
     // Check if we're in test/development mode with mock API keys
     this.isMockMode = this.isUsingMockKeys();
-    
+
     if (this.isMockMode) {
       logger.info('AI Research Service: Running in mock mode');
       this.geminiClient = null;
@@ -17,10 +17,10 @@ class AIResearchService {
       // Initialize AI clients
       this.geminiClient = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
       this.openaiClient = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: process.env.OPENAI_API_KEY
       });
     }
-    
+
     this.researchPrompt = `
 You are an AI assistant specialized in finding and verifying trash bin locations in Japan.
 Your task is to research and provide accurate information about public trash bins in the specified area.
@@ -46,11 +46,11 @@ Provide the response in JSON format.
     try {
       // Get all active areas
       const areas = await areaService.getAllAreas();
-      
+
       for (const area of areas) {
         await this.researchArea(area, cycleId);
       }
-      
+
       logger.info(`AI research cycle completed: ${cycleId}`);
     } catch (error) {
       logger.error('AI research cycle failed:', error);
@@ -61,7 +61,7 @@ Provide the response in JSON format.
   // Research specific area
   async researchArea(area, cycleId) {
     const startTime = Date.now();
-    
+
     try {
       // Record research start
       await this.recordResearchHistory({
@@ -80,7 +80,7 @@ Provide the response in JSON format.
 
       // Merge and validate results
       const mergedResults = await this.mergeAndValidateResults(geminiResults, openaiResults);
-      
+
       // Update database with new findings
       const updateCount = await this.updateTrashBins(mergedResults);
 
@@ -118,10 +118,10 @@ Provide the response in JSON format.
     if (this.isMockMode) {
       return this.generateMockTrashBins(area, 'gemini');
     }
-    
+
     try {
       const model = this.geminiClient.getGenerativeModel({ model: 'gemini-pro' });
-      
+
       const prompt = `${this.researchPrompt}
 
 Area: ${area.name.en || area.name.ja}
@@ -131,7 +131,7 @@ Please research trash bins in this area of Japan.`;
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
-      
+
       // Parse JSON response
       try {
         return JSON.parse(text);
@@ -150,7 +150,7 @@ Please research trash bins in this area of Japan.`;
     if (this.isMockMode) {
       return this.generateMockTrashBins(area, 'openai');
     }
-    
+
     try {
       const completion = await this.openaiClient.chat.completions.create({
         model: 'gpt-4',
@@ -171,7 +171,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
       });
 
       const response = completion.choices[0].message.content;
-      
+
       // Parse JSON response
       try {
         return JSON.parse(response);
@@ -188,16 +188,16 @@ Center: ${area.center.lat}, ${area.center.lng}`
   // Merge and validate results from multiple AI sources
   async mergeAndValidateResults(geminiResults, openaiResults) {
     const merged = new Map();
-    
+
     // Process all results
     const allResults = [...(geminiResults || []), ...(openaiResults || [])];
-    
+
     for (const result of allResults) {
       if (!this.validateTrashBinData(result)) continue;
-      
+
       // Generate unique key based on location
       const key = `${result.location.lat.toFixed(6)}_${result.location.lng.toFixed(6)}`;
-      
+
       if (merged.has(key)) {
         // Merge with existing entry
         const existing = merged.get(key);
@@ -206,21 +206,21 @@ Center: ${area.center.lat}, ${area.center.lng}`
         merged.set(key, result);
       }
     }
-    
+
     return Array.from(merged.values());
   }
 
   // Validate trash bin data
   validateTrashBinData(data) {
     return (
-      data &&
-      data.location &&
-      typeof data.location.lat === 'number' &&
-      typeof data.location.lng === 'number' &&
-      data.location.lat >= -90 && data.location.lat <= 90 &&
-      data.location.lng >= -180 && data.location.lng <= 180 &&
-      data.trash_types && Array.isArray(data.trash_types) &&
-      data.facility_type
+      data
+      && data.location
+      && typeof data.location.lat === 'number'
+      && typeof data.location.lng === 'number'
+      && data.location.lat >= -90 && data.location.lat <= 90
+      && data.location.lng >= -180 && data.location.lng <= 180
+      && data.trash_types && Array.isArray(data.trash_types)
+      && data.facility_type
     );
   }
 
@@ -238,23 +238,23 @@ Center: ${area.center.lat}, ${area.center.lng}`
   // Update trash bins in database
   async updateTrashBins(trashBins) {
     let updateCount = 0;
-    
+
     for (const trashBin of trashBins) {
       try {
         const exists = await this.checkTrashBinExists(trashBin.location);
-        
+
         if (exists) {
           await this.updateExistingTrashBin(exists.id, trashBin);
         } else {
           await this.createNewTrashBin(trashBin);
         }
-        
+
         updateCount++;
       } catch (error) {
         logger.error('Failed to update trash bin:', error);
       }
     }
-    
+
     return updateCount;
   }
 
@@ -266,7 +266,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
       WHERE ST_DWithin(location, ST_MakePoint($1, $2)::geography, 50)
       LIMIT 1
     `;
-    
+
     const result = await pgPool.query(query, [location.lng, location.lat]);
     return result.rows[0] || null;
   }
@@ -283,7 +283,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
         $7, $8, $9, $10, true
       )
     `;
-    
+
     const params = [
       this.formatMultilingualName(data.name),
       data.location.lng,
@@ -296,7 +296,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
       data.confidence || 0.7,
       data.source_count > 1 ? 0.9 : 0.7
     ];
-    
+
     await pgPool.query(query, params);
   }
 
@@ -312,21 +312,21 @@ Center: ${area.center.lat}, ${area.center.lng}`
         ai_verified = true
       WHERE id = $4
     `;
-    
+
     const params = [
       JSON.stringify(data.trash_types),
       data.confidence || 0.7,
       data.source_count > 1 ? 0.9 : 0.7,
       id
     ];
-    
+
     await pgPool.query(query, params);
   }
 
   // Format multilingual name
   formatMultilingualName(name) {
     if (typeof name === 'object') return JSON.stringify(name);
-    
+
     return JSON.stringify({
       ja: name,
       en: name,
@@ -337,7 +337,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
   // Format multilingual address
   formatMultilingualAddress(address) {
     if (typeof address === 'object') return JSON.stringify(address);
-    
+
     return JSON.stringify({
       ja: address,
       en: address,
@@ -348,10 +348,10 @@ Center: ${area.center.lat}, ${area.center.lng}`
   // Calculate quality score
   calculateQualityScore(results) {
     if (!results || results.length === 0) return 0;
-    
+
     const avgConfidence = results.reduce((sum, r) => sum + (r.confidence || 0.5), 0) / results.length;
-    const multiSourceRatio = results.filter(r => r.source_count > 1).length / results.length;
-    
+    const multiSourceRatio = results.filter((r) => r.source_count > 1).length / results.length;
+
     return Math.min(1, avgConfidence * 0.7 + multiSourceRatio * 0.3);
   }
 
@@ -363,7 +363,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
         results_count, quality_score, execution_time, status, error_message
       ) VALUES ($1, $2, $3, $4, $5, $6, $7::interval, $8, $9)
     `;
-    
+
     const params = [
       data.cycleId,
       data.researchType,
@@ -375,7 +375,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
       data.status,
       data.errorMessage || null
     ];
-    
+
     await pgPool.query(query, params);
   }
 
@@ -388,13 +388,13 @@ Center: ${area.center.lat}, ${area.center.lng}`
   isUsingMockKeys() {
     const googleKey = process.env.GOOGLE_AI_API_KEY || '';
     const openaiKey = process.env.OPENAI_API_KEY || '';
-    
+
     return (
-      googleKey.includes('test_') || 
-      openaiKey.includes('test_') ||
-      googleKey === 'YOUR_GOOGLE_AI_API_KEY_HERE' ||
-      openaiKey === 'YOUR_OPENAI_API_KEY_HERE' ||
-      process.env.NODE_ENV === 'test'
+      googleKey.includes('test_')
+      || openaiKey.includes('test_')
+      || googleKey === 'YOUR_GOOGLE_AI_API_KEY_HERE'
+      || openaiKey === 'YOUR_OPENAI_API_KEY_HERE'
+      || process.env.NODE_ENV === 'test'
     );
   }
 
@@ -402,15 +402,15 @@ Center: ${area.center.lat}, ${area.center.lng}`
   generateMockTrashBins(area, aiService) {
     const baseLatLng = area.center;
     const mockBins = [];
-    
+
     // Generate 2-4 mock trash bins around the area center
     const count = Math.floor(Math.random() * 3) + 2;
-    
+
     for (let i = 0; i < count; i++) {
       // Random offset within ~500m of center
       const latOffset = (Math.random() - 0.5) * 0.009; // ~500m
       const lngOffset = (Math.random() - 0.5) * 0.009;
-      
+
       const facilityTypes = ['convenience_store', 'station', 'park', 'vending_machine'];
       const trashTypes = [
         ['burnable', 'plastic'],
@@ -418,7 +418,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
         ['plastic_bottle', 'can'],
         ['burnable']
       ];
-      
+
       mockBins.push({
         name: `Mock Trash Bin ${i + 1} (${aiService})`,
         location: {
@@ -434,7 +434,7 @@ Center: ${area.center.lat}, ${area.center.lng}`
         source_count: 1
       });
     }
-    
+
     logger.info(`Generated ${count} mock trash bins for ${area.name.en || area.name.ja} using ${aiService}`);
     return mockBins;
   }

@@ -7,7 +7,7 @@ let db;
 
 const initSQLiteDB = async () => {
   if (db) return db;
-  
+
   try {
     db = await open({
       filename: path.join(__dirname, '../../data/trashspot.db'),
@@ -83,7 +83,7 @@ const mockRedisClient = {
     }
     return cache.get(key) || null;
   },
-  
+
   set: async (key, value, options = {}) => {
     cache.set(key, value);
     if (options.EX) {
@@ -91,7 +91,7 @@ const mockRedisClient = {
     }
     return 'OK';
   },
-  
+
   del: async (key) => {
     cache.delete(key);
     cacheExpiry.delete(key);

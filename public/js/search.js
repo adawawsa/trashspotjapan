@@ -131,20 +131,24 @@ const SearchModule = {
         params.append('trash_types', selectedTrashTypes.join(','));
       }
       
-      // Make API request
-      const response = await fetch(`${CONFIG.API_BASE_URL}/trash-bins/search?${params}`);
-      
-      if (!response.ok) {
-        throw new Error('Search request failed');
+      // Use mock data if available (demo mode)
+      if (window.MOCK_TRASH_BINS) {
+        console.log('Using mock data for search');
+        this.searchResults = this.filterMockData(window.MOCK_TRASH_BINS, location, radius, selectedTrashTypes);
+      } else {
+        // Make API request
+        const response = await fetch(`${CONFIG.API_BASE_URL}/trash-bins/search?${params}`);
+        
+        if (!response.ok) {
+          throw new Error('Search request failed');
+        }
+        
+        const data = await response.json();
+        this.searchResults = data.data.trash_bins;
       }
       
-      const data = await response.json();
-      
-      // Store results
-      this.searchResults = data.data.trash_bins;
-      
       // Update UI
-      this.displayResults(this.searchResults);
+      this.displaySearchResults(this.searchResults);
       
       // Update map
       window.MapModule.addTrashBinMarkers(this.searchResults);
@@ -157,6 +161,45 @@ const SearchModule = {
       this.isSearching = false;
       window.UIUtils.hideLoading();
     }
+  },
+  
+  // Filter mock data based on search criteria
+  filterMockData(mockData, location, radius, trashTypes) {
+    return mockData.filter(trashBin => {
+      // Calculate distance
+      const distance = this.calculateDistance(
+        location.lat, location.lng,
+        trashBin.location.lat, trashBin.location.lng
+      );
+      
+      // Update distance in result
+      trashBin.distance_meters = Math.round(distance);
+      
+      // Filter by radius
+      if (distance > radius) return false;
+      
+      // Filter by trash types if specified
+      if (trashTypes.length > 0) {
+        const hasMatchingType = trashTypes.some(type => 
+          trashBin.trash_types.includes(type)
+        );
+        if (!hasMatchingType) return false;
+      }
+      
+      return true;
+    }).sort((a, b) => a.distance_meters - b.distance_meters);
+  },
+  
+  // Calculate distance between two points using Haversine formula
+  calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371000; // Earth's radius in meters
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
   },
   
   // Get selected trash types
@@ -225,6 +268,11 @@ const SearchModule = {
     });
     
     return card;
+  },
+
+  // Alias for backward compatibility and mock usage
+  displaySearchResults(trashBins) {
+    this.displayResults(trashBins);
   },
   
   // Filter results

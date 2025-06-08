@@ -1,4 +1,5 @@
 const express = require('express');
+
 const router = express.Router();
 const trashBinController = require('../controllers/trashBinController');
 const { validateSearchQuery, validateFeedback } = require('../middleware/validation');

@@ -4,7 +4,9 @@ const CONFIG = {
   API_BASE_URL: window.location.origin + '/api/v1',
   
   // Google Maps Configuration  
-  GOOGLE_MAPS_API_KEY: window.GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY', // 環境変数から取得
+  get GOOGLE_MAPS_API_KEY() {
+    return window.GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY';
+  },
   DEFAULT_CENTER: { lat: 35.6762, lng: 139.6503 }, // Tokyo
   DEFAULT_ZOOM: 13,
   
@@ -13,7 +15,7 @@ const CONFIG = {
   MAX_SEARCH_RESULTS: 50,
   
   // WebSocket Configuration
-  WEBSOCKET_URL: `ws://${window.location.host}/ws/updates`,
+  WEBSOCKET_URL: `ws://${window.location.host}`,
   WEBSOCKET_RECONNECT_INTERVAL: 5000, // 5 seconds
   
   // Cache Configuration

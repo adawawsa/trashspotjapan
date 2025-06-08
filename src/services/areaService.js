@@ -30,7 +30,7 @@ class AreaService {
 
       const result = await pgPool.query(query);
 
-      const areas = result.rows.map(row => ({
+      const areas = result.rows.map((row) => ({
         id: row.id,
         name: row.name,
         center: {

@@ -1,6 +1,5 @@
 const areaService = require('../services/areaService');
 const trashBinService = require('../services/trashBinService');
-const logger = require('../utils/logger');
 
 // Get all areas
 const getAllAreas = async (req, res, next) => {
@@ -35,13 +34,13 @@ const getAreaById = async (req, res, next) => {
       });
     }
 
-    res.json({
+    return res.json({
       status: 'success',
       data: area,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -49,11 +48,11 @@ const getAreaById = async (req, res, next) => {
 const getTrashBinsInArea = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { trash_types, facility_types } = req.query;
+    const { trash_types: trashTypes, facility_types: facilityTypes } = req.query;
 
     const filters = {
-      trashTypes: trash_types ? trash_types.split(',') : null,
-      facilityTypes: facility_types ? facility_types.split(',') : null
+      trashTypes: trashTypes ? trashTypes.split(',') : null,
+      facilityTypes: facilityTypes ? facilityTypes.split(',') : null
     };
 
     const trashBins = await trashBinService.getTrashBinsByArea(id, filters);

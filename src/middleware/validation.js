@@ -1,22 +1,22 @@
-const { body, query, param, validationResult } = require('express-validator');
+const {
+  body, query, param, validationResult
+} = require('express-validator');
 
 // Validation middleware wrapper
-const validate = (validations) => {
-  return async (req, res, next) => {
-    await Promise.all(validations.map(validation => validation.run(req)));
+const validate = (validations) => async (req, res, next) => {
+  await Promise.all(validations.map((validation) => validation.run(req)));
 
-    const errors = validationResult(req);
-    if (errors.isEmpty()) {
-      return next();
-    }
+  const errors = validationResult(req);
+  if (errors.isEmpty()) {
+    return next();
+  }
 
-    res.status(400).json({
-      status: 'error',
-      message: 'Validation failed',
-      errors: errors.array(),
-      timestamp: new Date().toISOString()
-    });
-  };
+  return res.status(400).json({
+    status: 'error',
+    message: 'Validation failed',
+    errors: errors.array(),
+    timestamp: new Date().toISOString()
+  });
 };
 
 // Search query validation
@@ -44,7 +44,7 @@ const validateSearchQuery = validate([
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
+    .withMessage('Limit must be between 1 and 100')
 ]);
 
 // Feedback validation
@@ -67,17 +67,15 @@ const validateFeedback = validate([
   body('user_lng')
     .optional()
     .isFloat({ min: -180, max: 180 })
-    .withMessage('User longitude must be between -180 and 180'),
+    .withMessage('User longitude must be between -180 and 180')
 ]);
 
 // UUID param validation
-const validateUUID = (paramName) => {
-  return validate([
-    param(paramName)
-      .isUUID()
-      .withMessage(`Invalid ${paramName}`)
-  ]);
-};
+const validateUUID = (paramName) => validate([
+  param(paramName)
+    .isUUID()
+    .withMessage(`Invalid ${paramName}`)
+]);
 
 module.exports = {
   validate,

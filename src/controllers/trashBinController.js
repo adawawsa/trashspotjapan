@@ -1,5 +1,4 @@
 const trashBinService = require('../services/trashBinService');
-const logger = require('../utils/logger');
 
 // Search trash bins
 const searchTrashBins = async (req, res, next) => {
@@ -8,8 +7,8 @@ const searchTrashBins = async (req, res, next) => {
       lat,
       lng,
       radius = 500,
-      trash_types,
-      facility_types,
+      trash_types: trashTypes,
+      facility_types: facilityTypes,
       limit = 50
     } = req.query;
 
@@ -26,14 +25,14 @@ const searchTrashBins = async (req, res, next) => {
       lat: parseFloat(lat),
       lng: parseFloat(lng),
       radius: parseInt(radius, 10),
-      trashTypes: trash_types ? trash_types.split(',') : null,
-      facilityTypes: facility_types ? facility_types.split(',') : null,
+      trashTypes: trashTypes ? trashTypes.split(',') : null,
+      facilityTypes: facilityTypes ? facilityTypes.split(',') : null,
       limit: parseInt(limit, 10)
     };
 
     const results = await trashBinService.searchNearbyTrashBins(searchParams);
 
-    res.json({
+    return res.json({
       status: 'success',
       data: {
         count: results.length,
@@ -44,7 +43,7 @@ const searchTrashBins = async (req, res, next) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -63,13 +62,13 @@ const getTrashBinById = async (req, res, next) => {
       });
     }
 
-    res.json({
+    return res.json({
       status: 'success',
       data: trashBin,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -112,16 +111,16 @@ const submitFeedback = async (req, res, next) => {
 const getTrashBinsByArea = async (req, res, next) => {
   try {
     const { areaId } = req.params;
-    const { trash_types, facility_types } = req.query;
+    const { trash_types: trashTypes, facility_types: facilityTypes } = req.query;
 
     const filters = {
-      trashTypes: trash_types ? trash_types.split(',') : null,
-      facilityTypes: facility_types ? facility_types.split(',') : null
+      trashTypes: trashTypes ? trashTypes.split(',') : null,
+      facilityTypes: facilityTypes ? facilityTypes.split(',') : null
     };
 
     const trashBins = await trashBinService.getTrashBinsByArea(areaId, filters);
 
-    res.json({
+    return res.json({
       status: 'success',
       data: {
         area_id: areaId,
@@ -131,7 +130,7 @@ const getTrashBinsByArea = async (req, res, next) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
