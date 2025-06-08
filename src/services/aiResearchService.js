@@ -6,11 +6,20 @@ const areaService = require('./areaService');
 
 class AIResearchService {
   constructor() {
-    // Initialize AI clients
-    this.geminiClient = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-    this.openaiClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    // Check if we're in test/development mode with mock API keys
+    this.isMockMode = this.isUsingMockKeys();
+    
+    if (this.isMockMode) {
+      logger.info('AI Research Service: Running in mock mode');
+      this.geminiClient = null;
+      this.openaiClient = null;
+    } else {
+      // Initialize AI clients
+      this.geminiClient = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+      this.openaiClient = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+    }
     
     this.researchPrompt = `
 You are an AI assistant specialized in finding and verifying trash bin locations in Japan.
@@ -106,6 +115,10 @@ Provide the response in JSON format.
 
   // Research with Gemini
   async researchWithGemini(area) {
+    if (this.isMockMode) {
+      return this.generateMockTrashBins(area, 'gemini');
+    }
+    
     try {
       const model = this.geminiClient.getGenerativeModel({ model: 'gemini-pro' });
       
@@ -134,6 +147,10 @@ Please research trash bins in this area of Japan.`;
 
   // Research with OpenAI
   async researchWithOpenAI(area) {
+    if (this.isMockMode) {
+      return this.generateMockTrashBins(area, 'openai');
+    }
+    
     try {
       const completion = await this.openaiClient.chat.completions.create({
         model: 'gpt-4',
@@ -365,6 +382,61 @@ Center: ${area.center.lat}, ${area.center.lng}`
   // Generate cycle ID
   generateCycleId() {
     return `cycle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // Check if using mock API keys
+  isUsingMockKeys() {
+    const googleKey = process.env.GOOGLE_AI_API_KEY || '';
+    const openaiKey = process.env.OPENAI_API_KEY || '';
+    
+    return (
+      googleKey.includes('test_') || 
+      openaiKey.includes('test_') ||
+      googleKey === 'YOUR_GOOGLE_AI_API_KEY_HERE' ||
+      openaiKey === 'YOUR_OPENAI_API_KEY_HERE' ||
+      process.env.NODE_ENV === 'test'
+    );
+  }
+
+  // Generate mock trash bins for development/testing
+  generateMockTrashBins(area, aiService) {
+    const baseLatLng = area.center;
+    const mockBins = [];
+    
+    // Generate 2-4 mock trash bins around the area center
+    const count = Math.floor(Math.random() * 3) + 2;
+    
+    for (let i = 0; i < count; i++) {
+      // Random offset within ~500m of center
+      const latOffset = (Math.random() - 0.5) * 0.009; // ~500m
+      const lngOffset = (Math.random() - 0.5) * 0.009;
+      
+      const facilityTypes = ['convenience_store', 'station', 'park', 'vending_machine'];
+      const trashTypes = [
+        ['burnable', 'plastic'],
+        ['burnable', 'plastic_bottle', 'can'],
+        ['plastic_bottle', 'can'],
+        ['burnable']
+      ];
+      
+      mockBins.push({
+        name: `Mock Trash Bin ${i + 1} (${aiService})`,
+        location: {
+          lat: baseLatLng.lat + latOffset,
+          lng: baseLatLng.lng + lngOffset
+        },
+        address: `Mock Address ${i + 1}, ${area.name.ja || area.name.en}`,
+        trash_types: trashTypes[Math.floor(Math.random() * trashTypes.length)],
+        facility_type: facilityTypes[Math.floor(Math.random() * facilityTypes.length)],
+        access_conditions: 'Public access',
+        operating_hours: '24/7',
+        confidence: 0.8 + Math.random() * 0.2,
+        source_count: 1
+      });
+    }
+    
+    logger.info(`Generated ${count} mock trash bins for ${area.name.en || area.name.ja} using ${aiService}`);
+    return mockBins;
   }
 }
 

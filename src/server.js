@@ -66,7 +66,24 @@ app.use('/api/v1/areas', areaRoutes);
 
 // Home page route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+  // Check if Google Maps API key is available
+  const hasGoogleMapsKey = process.env.GOOGLE_MAPS_API_KEY && 
+    process.env.GOOGLE_MAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE' &&
+    !process.env.GOOGLE_MAPS_API_KEY.includes('test_');
+  
+  // Inject API key into the HTML
+  const fs = require('fs');
+  const indexPath = path.join(__dirname, '..', 'public', 'index.html');
+  let html = fs.readFileSync(indexPath, 'utf8');
+  
+  // Inject Google Maps API key
+  const apiKeyScript = hasGoogleMapsKey 
+    ? `<script>window.GOOGLE_MAPS_API_KEY = '${process.env.GOOGLE_MAPS_API_KEY}';</script>`
+    : `<script>window.GOOGLE_MAPS_API_KEY = null; console.warn('Google Maps API key not configured - using mock mode');</script>`;
+  
+  html = html.replace('</head>', `${apiKeyScript}\n</head>`);
+  
+  res.send(html);
 });
 
 // Health check endpoint

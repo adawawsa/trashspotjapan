@@ -4,7 +4,7 @@ const CONFIG = {
   API_BASE_URL: window.location.origin + '/api/v1',
   
   // Google Maps Configuration  
-  GOOGLE_MAPS_API_KEY: 'YOUR_GOOGLE_MAPS_API_KEY', // ⚠️ 実際のAPIキーに置き換えてください
+  GOOGLE_MAPS_API_KEY: window.GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY', // 環境変数から取得
   DEFAULT_CENTER: { lat: 35.6762, lng: 139.6503 }, // Tokyo
   DEFAULT_ZOOM: 13,
   
