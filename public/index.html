@@ -104,6 +104,79 @@
                         </label>
                     </div>
                 </div>
+                
+                <!-- Advanced Filters -->
+                <div class="advanced-filters-container">
+                    <button class="advanced-filters-toggle" id="advanced-filters-toggle">
+                        <span data-i18n="advanced_filters">高度なフィルター</span>
+                        <span class="toggle-icon">▼</span>
+                    </button>
+                    
+                    <div id="advanced-filters" class="advanced-filters hidden">
+                        <!-- Facility Type Filter -->
+                        <div class="filter-group">
+                            <h4 data-i18n="facility_type">施設タイプ</h4>
+                            <div class="facility-type-filters">
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" value="convenience_store" class="facility-type-filter">
+                                    <span data-i18n="facility_convenience_store">コンビニ</span>
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" value="station" class="facility-type-filter">
+                                    <span data-i18n="facility_station">駅</span>
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" value="park" class="facility-type-filter">
+                                    <span data-i18n="facility_park">公園</span>
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" value="shopping_mall" class="facility-type-filter">
+                                    <span data-i18n="facility_shopping_mall">ショッピングモール</span>
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" value="vending_machine" class="facility-type-filter">
+                                    <span data-i18n="facility_vending_machine">自動販売機</span>
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" value="public_facility" class="facility-type-filter">
+                                    <span data-i18n="facility_public_facility">公共施設</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Quality Score Filter -->
+                        <div class="filter-group">
+                            <h4 data-i18n="quality_score">品質スコア</h4>
+                            <div class="quality-score-filter">
+                                <input type="range" id="quality-score-slider" min="0" max="100" value="0">
+                                <div class="quality-score-labels">
+                                    <span data-i18n="quality_any">すべて</span>
+                                    <span id="quality-score-value">0%</span>
+                                    <span data-i18n="quality_high">高品質のみ</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Access Conditions Filter -->
+                        <div class="filter-group">
+                            <h4 data-i18n="access_conditions">利用条件</h4>
+                            <div class="access-filters">
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" value="public" id="access-public" class="access-filter">
+                                    <span data-i18n="access_public">誰でも利用可能</span>
+                                </label>
+                                <label class="filter-checkbox">
+                                    <input type="checkbox" value="24hours" id="access-24hours" class="access-filter">
+                                    <span data-i18n="access_24hours">24時間利用可能</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button class="apply-filters-btn" id="apply-advanced-filters">
+                            <span data-i18n="apply_filters">フィルターを適用</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -156,6 +229,65 @@
             <button class="modal-close" id="modal-close">&times;</button>
             <div id="modal-body">
                 <!-- Detail content will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="modal hidden">
+        <div class="modal-content">
+            <button class="modal-close" id="feedback-modal-close">&times;</button>
+            <div class="modal-header">
+                <h3 data-i18n="feedback_title">フィードバックを送信</h3>
+            </div>
+            <div class="modal-body">
+                <form id="feedback-form">
+                    <input type="hidden" id="feedback-trash-bin-id" name="trash_bin_id">
+                    
+                    <!-- Feedback Type -->
+                    <div class="form-group">
+                        <label data-i18n="feedback_type">フィードバックの種類</label>
+                        <select id="feedback-type" name="feedback_type" required>
+                            <option value="" data-i18n="feedback_select_type">種類を選択してください</option>
+                            <option value="correct" data-i18n="feedback_correct">情報が正確</option>
+                            <option value="incorrect_location" data-i18n="feedback_incorrect_location">場所が間違っている</option>
+                            <option value="wrong_info" data-i18n="feedback_wrong_info">情報が間違っている</option>
+                            <option value="removed" data-i18n="feedback_removed">ゴミ箱が撤去された</option>
+                            <option value="damaged" data-i18n="feedback_damaged">ゴミ箱が破損している</option>
+                            <option value="full" data-i18n="feedback_full">ゴミ箱が満杯</option>
+                            <option value="other" data-i18n="feedback_other">その他</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Feedback Content -->
+                    <div class="form-group">
+                        <label data-i18n="feedback_content">詳細（任意）</label>
+                        <textarea id="feedback-content" name="feedback_content" rows="4" 
+                                  data-i18n-placeholder="feedback_content_placeholder">詳細な説明があれば記入してください</textarea>
+                    </div>
+                    
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label data-i18n="feedback_image">写真を添付（任意）</label>
+                        <div class="image-upload-area" id="image-upload-area">
+                            <input type="file" id="feedback-image" name="image" accept="image/*" hidden>
+                            <div class="upload-placeholder" id="upload-placeholder">
+                                <div class="upload-icon">📷</div>
+                                <p data-i18n="feedback_image_placeholder">クリックして写真を選択</p>
+                                <p class="upload-hint" data-i18n="feedback_image_hint">JPG, PNG形式（最大5MB）</p>
+                            </div>
+                            <div class="image-preview hidden" id="image-preview">
+                                <img id="preview-image" src="" alt="Preview">
+                                <button type="button" class="remove-image" id="remove-image">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="feedback-cancel" data-i18n="cancel">キャンセル</button>
+                        <button type="submit" class="btn-primary" data-i18n="submit">送信</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

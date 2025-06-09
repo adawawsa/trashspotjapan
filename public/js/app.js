@@ -114,6 +114,9 @@ const UIUtils = {
         this.hideModal();
       }
     });
+    
+    // Initialize feedback form handlers
+    this.initFeedbackHandlers();
   },
   
   // Show loading indicator
@@ -158,7 +161,7 @@ const UIUtils = {
   // Show trash bin details
   async showTrashBinDetails(trashBinId) {
     try {
-      const response = await fetch(`${CONFIG.API_BASE_URL}/trash-bins/${trashBinId}`);
+      const response = await fetch(`/api/v1/trash-bins/${trashBinId}`);
       if (!response.ok) throw new Error('Failed to fetch details');
       
       const data = await response.json();
@@ -237,8 +240,232 @@ const UIUtils = {
   
   // Show report form
   showReportForm(trashBinId) {
-    // TODO: Implement report form
-    console.log('Show report form for:', trashBinId);
+    const modal = document.getElementById('feedback-modal');
+    const trashBinIdInput = document.getElementById('feedback-trash-bin-id');
+    
+    if (trashBinIdInput) {
+      trashBinIdInput.value = trashBinId;
+    }
+    
+    // Reset form
+    const form = document.getElementById('feedback-form');
+    if (form) {
+      form.reset();
+      this.removeSelectedImage();
+    }
+    
+    // Close detail modal
+    this.hideModal();
+    
+    // Show feedback modal
+    modal.classList.remove('hidden');
+  },
+
+  // Initialize feedback form handlers
+  initFeedbackHandlers() {
+    // Image upload area
+    const imageUploadArea = document.getElementById('image-upload-area');
+    const fileInput = document.getElementById('feedback-image');
+    const removeImageBtn = document.getElementById('remove-image');
+    
+    if (imageUploadArea && fileInput) {
+      // Click to select file
+      imageUploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+      
+      // Handle file selection
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          this.handleImageSelection(file);
+        }
+      });
+      
+      // Remove image button
+      if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.removeSelectedImage();
+        });
+      }
+      
+      // Drag and drop support
+      imageUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        imageUploadArea.style.borderColor = '#2ecc71';
+      });
+      
+      imageUploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        imageUploadArea.style.borderColor = '#ddd';
+      });
+      
+      imageUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        imageUploadArea.style.borderColor = '#ddd';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          const file = files[0];
+          if (file.type.startsWith('image/')) {
+            fileInput.files = files;
+            this.handleImageSelection(file);
+          }
+        }
+      });
+    }
+    
+    // Form submission
+    const feedbackForm = document.getElementById('feedback-form');
+    if (feedbackForm) {
+      feedbackForm.addEventListener('submit', (e) => this.handleFeedbackSubmit(e));
+    }
+    
+    // Cancel button
+    const cancelBtn = document.getElementById('feedback-cancel');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => this.closeFeedbackModal());
+    }
+    
+    // Close button
+    const closeBtn = document.getElementById('feedback-modal-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => this.closeFeedbackModal());
+    }
+  },
+
+  // Handle image selection and preview
+  handleImageSelection(file) {
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      this.showNotification(i18n.t('feedback_error') || 'ファイルサイズが大きすぎます（最大5MB）', 'error');
+      return;
+    }
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      this.showNotification('画像ファイルを選択してください', 'error');
+      return;
+    }
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const uploadPlaceholder = document.getElementById('upload-placeholder');
+      const imagePreview = document.getElementById('image-preview');
+      const previewImage = document.getElementById('preview-image');
+      
+      if (uploadPlaceholder && imagePreview && previewImage) {
+        previewImage.src = e.target.result;
+        uploadPlaceholder.classList.add('hidden');
+        imagePreview.classList.remove('hidden');
+      }
+    };
+    reader.readAsDataURL(file);
+  },
+
+  // Remove selected image
+  removeSelectedImage() {
+    const fileInput = document.getElementById('feedback-image');
+    const uploadPlaceholder = document.getElementById('upload-placeholder');
+    const imagePreview = document.getElementById('image-preview');
+    
+    if (fileInput) {
+      fileInput.value = '';
+    }
+    
+    if (uploadPlaceholder && imagePreview) {
+      uploadPlaceholder.classList.remove('hidden');
+      imagePreview.classList.add('hidden');
+    }
+  },
+
+  // Handle feedback form submission
+  async handleFeedbackSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    
+    try {
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.textContent = '送信中...';
+      
+      // Create FormData for file upload
+      const formData = new FormData(form);
+      
+      // Add user location if available
+      if (navigator.geolocation) {
+        try {
+          const position = await this.getCurrentPosition();
+          formData.append('user_lat', position.coords.latitude);
+          formData.append('user_lng', position.coords.longitude);
+        } catch (error) {
+          // Location not available, continue without it
+          console.log('Location not available for feedback');
+        }
+      }
+      
+      // Submit feedback
+      const response = await fetch(`/api/v1/trash-bins/feedback`, {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        this.showNotification(i18n.t('feedback_success') || 'フィードバックを送信しました', 'success');
+        this.closeFeedbackModal();
+      } else {
+        throw new Error(result.message || 'フィードバックの送信に失敗しました');
+      }
+      
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      this.showNotification(i18n.t('feedback_error') || 'フィードバックの送信に失敗しました', 'error');
+    } finally {
+      // Restore button state
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  },
+
+  // Get current position as Promise
+  getCurrentPosition() {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        resolve,
+        reject,
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    });
+  },
+
+  // Close feedback modal
+  closeFeedbackModal() {
+    const modal = document.getElementById('feedback-modal');
+    const form = document.getElementById('feedback-form');
+    
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+    
+    if (form) {
+      form.reset();
+      this.removeSelectedImage();
+    }
   }
 };
 

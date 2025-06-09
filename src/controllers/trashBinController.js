@@ -9,6 +9,7 @@ const searchTrashBins = async (req, res, next) => {
       radius = 500,
       trash_types: trashTypes,
       facility_types: facilityTypes,
+      min_quality_score: minQualityScore,
       limit = 50
     } = req.query;
 
@@ -27,6 +28,7 @@ const searchTrashBins = async (req, res, next) => {
       radius: parseInt(radius, 10),
       trashTypes: trashTypes ? trashTypes.split(',') : null,
       facilityTypes: facilityTypes ? facilityTypes.split(',') : null,
+      minQualityScore: minQualityScore ? parseFloat(minQualityScore) : null,
       limit: parseInt(limit, 10)
     };
 
@@ -75,15 +77,22 @@ const getTrashBinById = async (req, res, next) => {
 // Submit user feedback
 const submitFeedback = async (req, res, next) => {
   try {
+    // Handle image file if uploaded
+    let imageUrl = null;
+    if (req.file) {
+      // For now, we'll store the image path. In production, you'd upload to cloud storage
+      imageUrl = `/uploads/${req.file.filename}`;
+    }
+
     const feedbackData = {
       trashBinId: req.body.trash_bin_id,
       feedbackType: req.body.feedback_type,
       feedbackContent: req.body.feedback_content,
       userLocation: req.body.user_lat && req.body.user_lng ? {
-        lat: req.body.user_lat,
-        lng: req.body.user_lng
+        lat: parseFloat(req.body.user_lat),
+        lng: parseFloat(req.body.user_lng)
       } : null,
-      imageUrl: req.body.image_url
+      imageUrl: imageUrl
     };
 
     const feedback = await trashBinService.submitUserFeedback(feedbackData);

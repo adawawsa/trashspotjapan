@@ -29,6 +29,32 @@ const SearchModule = {
         }
       });
     });
+    
+    // Advanced filters toggle
+    document.getElementById('advanced-filters-toggle').addEventListener('click', () => {
+      this.toggleAdvancedFilters();
+    });
+    
+    // Quality score slider
+    const qualitySlider = document.getElementById('quality-score-slider');
+    const qualityValue = document.getElementById('quality-score-value');
+    qualitySlider.addEventListener('input', (e) => {
+      qualityValue.textContent = e.target.value + '%';
+    });
+    
+    // Apply advanced filters button
+    document.getElementById('apply-advanced-filters').addEventListener('click', () => {
+      this.handleSearch();
+    });
+  },
+  
+  // Toggle advanced filters
+  toggleAdvancedFilters() {
+    const toggleBtn = document.getElementById('advanced-filters-toggle');
+    const advancedFilters = document.getElementById('advanced-filters');
+    
+    toggleBtn.classList.toggle('active');
+    advancedFilters.classList.toggle('hidden');
   },
   
   // Handle search
@@ -118,6 +144,8 @@ const SearchModule = {
     // Get search parameters
     const radius = parseInt(document.getElementById('search-radius').value);
     const selectedTrashTypes = this.getSelectedTrashTypes();
+    const selectedFacilityTypes = this.getSelectedFacilityTypes();
+    const minQualityScore = parseInt(document.getElementById('quality-score-slider').value) / 100;
     
     try {
       // Build query parameters
@@ -131,10 +159,18 @@ const SearchModule = {
         params.append('trash_types', selectedTrashTypes.join(','));
       }
       
+      if (selectedFacilityTypes.length > 0) {
+        params.append('facility_types', selectedFacilityTypes.join(','));
+      }
+      
+      if (minQualityScore > 0) {
+        params.append('min_quality_score', minQualityScore);
+      }
+      
       // Use mock data if available (demo mode)
       if (window.MOCK_TRASH_BINS) {
         console.log('Using mock data for search');
-        this.searchResults = this.filterMockData(window.MOCK_TRASH_BINS, location, radius, selectedTrashTypes);
+        this.searchResults = this.filterMockData(window.MOCK_TRASH_BINS, location, radius, selectedTrashTypes, selectedFacilityTypes, minQualityScore);
       } else {
         // Make API request
         const response = await fetch(`${CONFIG.API_BASE_URL}/trash-bins/search?${params}`);
@@ -164,7 +200,7 @@ const SearchModule = {
   },
   
   // Filter mock data based on search criteria
-  filterMockData(mockData, location, radius, trashTypes) {
+  filterMockData(mockData, location, radius, trashTypes, facilityTypes, minQualityScore) {
     return mockData.filter(trashBin => {
       // Calculate distance
       const distance = this.calculateDistance(
@@ -179,11 +215,21 @@ const SearchModule = {
       if (distance > radius) return false;
       
       // Filter by trash types if specified
-      if (trashTypes.length > 0) {
+      if (trashTypes && trashTypes.length > 0) {
         const hasMatchingType = trashTypes.some(type => 
           trashBin.trash_types.includes(type)
         );
         if (!hasMatchingType) return false;
+      }
+      
+      // Filter by facility types if specified
+      if (facilityTypes && facilityTypes.length > 0) {
+        if (!facilityTypes.includes(trashBin.facility_type)) return false;
+      }
+      
+      // Filter by quality score if specified
+      if (minQualityScore && minQualityScore > 0) {
+        if (trashBin.quality_score < minQualityScore) return false;
       }
       
       return true;
@@ -206,6 +252,15 @@ const SearchModule = {
   getSelectedTrashTypes() {
     const selected = [];
     document.querySelectorAll('.trash-type-filter:checked').forEach(checkbox => {
+      selected.push(checkbox.value);
+    });
+    return selected;
+  },
+  
+  // Get selected facility types
+  getSelectedFacilityTypes() {
+    const selected = [];
+    document.querySelectorAll('.facility-type-filter:checked').forEach(checkbox => {
       selected.push(checkbox.value);
     });
     return selected;
